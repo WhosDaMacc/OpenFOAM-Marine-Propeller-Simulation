@@ -13,20 +13,34 @@ FoamFile
     location    "constant";
     object      dynamicMeshDict;
 }
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 dynamicFvMesh   dynamicMotionSolverFvMesh;
 
-motionSolverLibs (fvMotionSolvers);
+// Use rigidBodyMotion for multiple rotating bodies
+motionSolverLibs ("librigidBodyMotion.so"); // Changed from fvMotionSolvers
+motionSolver    rigidBodyMotion;
 
-motionSolver    solidBody;
+rigidBodyMotionCoeffs
+{
+    report      on;
 
-cellZone        innerCylinderSmall;
+    // Inner blade rotation
+    innerBlade
+    {
+        type        rotating;
+        n           158;   // Angular velocity (rad/s ≈ 1500 RPM)
+        axis        (0 0 1); // Rotate around Z-axis (typical for propellers)
+        patch       "innerBladeSurface"; // Patch name for inner blades
+        cellZone    innerCylinderSmall; // Cell zone for inner blade region
+    }
 
-solidBodyMotionFunction  rotatingMotion;
-
-origin      (0 0 0);
-axis        (0 1 0);
-omega       158; // rad/s
-
-// ************************************************************************* //
+    // Outer blade rotation (added)
+    outerBlade
+    {
+        type        rotating;
+        n           53;    // ~500 RPM (adjust for vortex handoff ratio)
+        axis        (0 0 1);
+        patch       "outerBladeSurface";
+        cellZone    outerCylinderLarge; // Define this cellZone in mesh
+    }
+}
